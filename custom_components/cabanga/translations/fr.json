@@ -1,0 +1,20 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion à Cabanga",
+        "description": "Collez le refresh_token récupéré manuellement dans les DevTools du navigateur (voir README). Format des élèves : id:Nom, id:Nom (ex. {students_example}).",
+        "data": {
+          "refresh_token": "Refresh token",
+          "school_id": "Identifiant école (ex. CSJCHENEE)",
+          "students": "Élèves (id:Nom, id:Nom, ...)"
+        }
+      }
+    },
+    "error": {
+      "invalid_refresh_token": "Refresh token invalide ou expiré. Récupérez-en un nouveau via les DevTools.",
+      "cannot_connect": "Impossible de contacter l'API Cabanga.",
+      "invalid_students_format": "Format invalide, attendu id:Nom, id:Nom"
+    }
+  }
+}

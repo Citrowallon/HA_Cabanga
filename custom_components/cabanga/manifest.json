@@ -1,0 +1,12 @@
+{
+  "domain": "cabanga",
+  "name": "Cabanga",
+  "codeowners": ["@schumi"],
+  "config_flow": true,
+  "documentation": "https://github.com/schumi/ha-cabanga",
+  "issue_tracker": "https://github.com/schumi/ha-cabanga/issues",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}
