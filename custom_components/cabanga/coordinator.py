@@ -72,12 +72,16 @@ class CabangaCoordinator(DataUpdateCoordinator):
                     school_id, student_id, _current_school_year(today)
                 )
                 absences = await self.client.async_get_absences(school_id, student_id)
+                early_departures = await self.client.async_get_early_departures(
+                    school_id, student_id, _current_school_year(today)
+                )
                 result[student_id] = {
                     "name": student["name"],
                     "school_id": school_id,
                     "diary": diary,
                     "evaluations": evaluations,
                     "absences": absences,
+                    "early_departures": early_departures,
                 }
         except CabangaAuthError as err:
             # Signale à HA que cette entrée a besoin d'être ré-authentifiée :

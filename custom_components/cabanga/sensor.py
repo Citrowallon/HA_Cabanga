@@ -23,6 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         entities.append(CabangaHomeworkSensor(coordinator, entry, student_id))
         entities.append(CabangaEvaluationSensor(coordinator, entry, student_id))
         entities.append(CabangaAbsenceSensor(coordinator, entry, student_id))
+        entities.append(CabangaEarlyDepartureSensor(coordinator, entry, student_id))
 
     async_add_entities(entities)
 
@@ -232,3 +233,44 @@ class CabangaAbsenceSensor(_CabangaBaseSensor):
     def extra_state_attributes(self) -> dict:
         absences = self._student_data.get("absences", [])
         return {"absences_brutes": absences}
+
+
+class CabangaEarlyDepartureSensor(_CabangaBaseSensor):
+    """Retours anticipés (sorties avant l'heure) sur l'année scolaire en cours."""
+
+    _attr_icon = "mdi:exit-run"
+
+    def __init__(self, coordinator, entry, student_id) -> None:
+        super().__init__(coordinator, entry, student_id)
+        self._attr_unique_id = f"{DOMAIN}_{student_id}_retours_anticipes"
+        name = self._student_name_init(coordinator, student_id)
+        self._attr_name = f"Retours anticipés {name}"
+
+    @staticmethod
+    def _student_name_init(coordinator, student_id) -> str:
+        return coordinator.data.get(student_id, {}).get("name", student_id) if coordinator.data else student_id
+
+    @property
+    def _sorted_departures(self) -> list[dict]:
+        departures = self._student_data.get("early_departures", [])
+        return sorted(departures, key=lambda d: d.get("date") or "", reverse=True)
+
+    @property
+    def native_value(self) -> int:
+        return len(self._sorted_departures)
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        departures = self._sorted_departures
+        return {
+            "retours": [
+                {
+                    "date": d.get("date"),
+                    "heure": d.get("hour"),
+                    "motif": d.get("reason"),
+                    "classe": d.get("className"),
+                    "autorise_par": f"{d.get('authorFirstName', '')} {d.get('authorLastName', '')}".strip(),
+                }
+                for d in departures
+            ]
+        }

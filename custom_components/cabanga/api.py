@@ -113,3 +113,11 @@ class CabangaApiClient:
         """
         url = f"{API_BASE_URL}/schools/{school_id}/students/{student_id}/legalAbsences"
         return await self._authed_get(url)
+
+    async def async_get_early_departures(
+        self, school_id: str, student_id: str, year: int
+    ) -> list[dict]:
+        """Retours anticipés (sorties avant l'heure) pour un élève."""
+        url = f"{API_BASE_URL}/schools/{school_id}/students/{student_id}/earlyDepartures"
+        params = {"year": year}
+        return await self._authed_get(url, params)
