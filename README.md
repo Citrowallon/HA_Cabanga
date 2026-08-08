@@ -82,6 +82,51 @@ Copie le dossier `custom_components/cabanga` dans le dossier
   l'intégration avec un nouveau token capturé manuellement — pas de
   notification automatique de ce cas en v0.1
 
+## Cartes Lovelace (style Nexus HUD)
+
+Trois cartes prêtes à l'emploi sont fournies dans
+[`examples/lovelace/`](examples/lovelace/), dans le style visuel "Nexus HUD"
+(fond navy, bordures/glow cyan, police Orbitron/Share Tech Mono).
+
+### Carte principale — journal, devoirs, dernières évaluations
+
+![Carte principale](docs/screenshots/carte-principale.png)
+
+Journal de classe du jour, devoirs à faire (non cochés comme faits), et les
+5 dernières évaluations avec badge coloré (🟢 ≥65%, 🟠 ≥50%, 🔴 en dessous).
+
+→ [`examples/lovelace/carte-principale.yaml`](examples/lovelace/carte-principale.yaml)
+— nécessite `custom:button-card`
+
+### Carte historique — toutes les évaluations de l'année
+
+![Carte historique](docs/screenshots/carte-historique.png)
+
+Liste scrollable de toutes les évaluations de l'année scolaire en cours,
+avec moyenne pondérée globale en en-tête.
+
+→ [`examples/lovelace/carte-historique.yaml`](examples/lovelace/carte-historique.yaml)
+— nécessite `card-mod`
+
+### Carte moyennes par matière
+
+![Carte moyennes](docs/screenshots/carte-moyennes.png)
+
+Moyenne pondérée par matière depuis le début de l'année, triée par ordre
+croissant (matières les plus faibles en premier).
+
+→ [`examples/lovelace/carte-moyennes.yaml`](examples/lovelace/carte-moyennes.yaml)
+— nécessite `custom:button-card`
+
+### Installation d'une carte
+
+1. Ouvre le fichier `.yaml` correspondant, copie tout le contenu
+2. Dans ton dashboard Lovelace, ajoute une carte → mode YAML (icône crayon
+   ou "Modifier en YAML")
+3. Colle le contenu, remplace `haley`/`HALEY` par l'entity_id et le nom de
+   l'enfant concerné
+4. Duplique pour chaque enfant configuré dans l'intégration
+
 ## Structure technique
 
 - `api.py` — client HTTP (Keycloak token refresh + endpoints Cabanga)

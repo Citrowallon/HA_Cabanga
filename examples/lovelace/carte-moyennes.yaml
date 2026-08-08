@@ -1,0 +1,151 @@
+# Carte moyennes par matière - style Nexus HUD
+# Prérequis HACS frontend : custom:button-card
+# Regroupe les évaluations non-formatives par matière depuis le début de
+# l'année scolaire, triées par moyenne croissante (matières les plus
+# faibles en premier).
+# Remplace "haley" dans l'entity_id ci-dessous par l'enfant concerné,
+# et "HALEY" dans le libellé d'affichage.
+type: custom:button-card
+show_name: false
+show_icon: false
+show_state: false
+tap_action:
+  action: none
+custom_fields:
+  card_content: |
+    [[[
+      const evalEntity = 'sensor.cabanga_haley_derniere_evaluation_haley';
+      const evalu = states[evalEntity];
+      const toutes = evalu?.attributes?.toutes || [];
+
+      const notees = toutes.filter(e => !e.formative && e.score !== null && e.score_max);
+
+      // Regroupement par matière
+      const parMatiere = {};
+      notees.forEach(e => {
+        const m = e.matiere || 'Autre';
+        if (!parMatiere[m]) parMatiere[m] = { totalScore: 0, totalMax: 0, count: 0 };
+        parMatiere[m].totalScore += parseFloat(e.score);
+        parMatiere[m].totalMax += parseFloat(e.score_max);
+        parMatiere[m].count += 1;
+      });
+
+      const rows = Object.keys(parMatiere).map(m => {
+        const d = parMatiere[m];
+        const avg = d.totalMax ? (d.totalScore / d.totalMax * 100) : 0;
+        return { matiere: m, avg: avg, count: d.count };
+      }).sort((a, b) => a.avg - b.avg);
+
+      function couleurNote(pct) {
+        if (pct >= 65) return '#00e5b0';
+        if (pct >= 50) return '#ff9030';
+        return '#ff3b5c';
+      }
+
+      const rowsHtml = rows.length
+        ? rows.map(r => {
+            const c = couleurNote(r.avg);
+            return `
+              <div class="eval-row">
+                <div class="eval-score-badge" style="color:${c};border-color:${c}">${r.avg.toFixed(1)}%</div>
+                <div class="eval-info">
+                  <div class="eval-matiere">${r.matiere}</div>
+                </div>
+                <div class="eval-date">${r.count} éval.</div>
+              </div>`;
+          }).join('')
+        : `<div class="empty">Aucune évaluation cette année</div>`;
+
+      return `
+        <style>
+          .nexus-cabanga {
+            font-family: 'Share Tech Mono', monospace;
+            color: #eaf6ff;
+            padding: 14px 16px 16px;
+            box-sizing: border-box;
+            margin: 0;
+          }
+          .nexus-cabanga * {
+            box-sizing: border-box;
+            margin: 0;
+          }
+          .nexus-cabanga .header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            color: #4fd3ff;
+            border-bottom: 1px solid rgba(70,190,255,0.18);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+          }
+          .nexus-cabanga .header ha-icon {
+            --mdc-icon-size: 16px;
+            color: #ffe082;
+          }
+          .nexus-cabanga .eval-row {
+            display: grid;
+            grid-template-columns: 64px 1fr auto;
+            align-items: center;
+            column-gap: 12px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(70,190,255,0.08);
+          }
+          .nexus-cabanga .eval-row:last-child { border-bottom: none; }
+          .nexus-cabanga .eval-score-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid;
+            border-radius: 6px;
+            padding: 3px 0;
+            text-align: center;
+          }
+          .nexus-cabanga .eval-info {
+            min-width: 0;
+            text-align: left;
+          }
+          .nexus-cabanga .eval-matiere {
+            font-size: 12.5px;
+            color: #eaf6ff;
+            text-align: left;
+          }
+          .nexus-cabanga .eval-date {
+            font-size: 11px;
+            color: rgba(234,246,255,0.4);
+            text-align: right;
+            white-space: nowrap;
+          }
+          .nexus-cabanga .empty {
+            font-size: 12px;
+            color: rgba(234,246,255,0.35);
+            font-style: italic;
+            padding: 4px 0;
+          }
+        </style>
+        <div class="nexus-cabanga">
+          <div class="header">
+            <ha-icon icon="mdi:chart-bar"></ha-icon>
+            <span>MOYENNES PAR MATIÈRE — HALEY</span>
+          </div>
+          ${rowsHtml}
+        </div>
+      `;
+    ]]]
+styles:
+  card:
+    - background: linear-gradient(180deg,rgba(4,16,40,0.97),rgba(4,15,34,0.98))
+    - border: 1px solid rgba(70,190,255,0.18)
+    - border-radius: 12px
+    - box-shadow: 0 0 14px rgba(79,211,255,0.08)
+    - padding: 0px
+  grid:
+    - grid-template-areas: '"card_content"'
+    - grid-template-columns: 1fr
+    - grid-template-rows: auto
+  custom_fields:
+    card_content:
+      - width: 100%
+      - padding: 0px
