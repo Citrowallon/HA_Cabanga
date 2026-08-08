@@ -52,7 +52,7 @@ class CabangaCoordinator(DataUpdateCoordinator):
         )
         self.entry = entry
         self.client = client
-        self.students = students  # [{"school_id": "CSJCHENEE", "id": "75729028", "name": "Haley"}, ...]
+        self.students = students  # [{"school_id": "ECOLE1", "id": "11111111", "name": "Prenom1"}, ...]
 
     async def _async_update_data(self) -> dict:
         today = date.today()

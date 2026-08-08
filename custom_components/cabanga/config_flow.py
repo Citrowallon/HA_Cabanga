@@ -83,7 +83,7 @@ class CabangaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=schema,
             errors=errors,
             description_placeholders={
-                "students_example": "CSJCHENEE:75729028:Haley, ECOLEX:12345678:Choukette"
+                "students_example": "ECOLE1:11111111:Prenom1, ECOLE2:22222222:Prenom2"
             },
         )
 
