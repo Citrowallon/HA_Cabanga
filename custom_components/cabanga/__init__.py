@@ -5,9 +5,10 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import CabangaApiClient
-from .const import CONF_REFRESH_TOKEN, CONF_SCHOOL_ID, CONF_STUDENTS, DOMAIN
+from .const import CONF_REFRESH_TOKEN, CONF_STUDENTS, DOMAIN
 from .coordinator import CabangaCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ PLATFORMS = ["sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Initialise l'intégration à partir d'une config entry."""
-    session = hass.helpers.aiohttp_client.async_get_clientsession()
+    session = async_get_clientsession(hass)
 
     client = CabangaApiClient(session, entry.data[CONF_REFRESH_TOKEN])
 
@@ -25,7 +26,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass,
         entry,
         client,
-        entry.data[CONF_SCHOOL_ID],
         entry.data[CONF_STUDENTS],
     )
     await coordinator.async_config_entry_first_refresh()

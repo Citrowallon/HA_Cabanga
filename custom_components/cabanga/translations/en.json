@@ -3,18 +3,17 @@
     "step": {
       "user": {
         "title": "Connect to Cabanga",
-        "description": "Paste the refresh_token captured manually from the browser DevTools (see README). Students format: id:Name, id:Name (e.g. {students_example}).",
+        "description": "Paste the refresh_token captured manually from the browser DevTools (see README). Each student carries its own school ID, format: school:id:Name, school:id:Name (e.g. {students_example}).",
         "data": {
           "refresh_token": "Refresh token",
-          "school_id": "School ID (e.g. CSJCHENEE)",
-          "students": "Students (id:Name, id:Name, ...)"
+          "students": "Students (school:id:Name, school:id:Name, ...)"
         }
       }
     },
     "error": {
       "invalid_refresh_token": "Invalid or expired refresh token. Capture a new one via DevTools.",
       "cannot_connect": "Could not reach the Cabanga API.",
-      "invalid_students_format": "Invalid format, expected id:Name, id:Name"
+      "invalid_students_format": "Invalid format, expected school:id:Name, school:id:Name"
     }
   }
 }

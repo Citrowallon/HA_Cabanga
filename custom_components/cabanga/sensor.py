@@ -187,4 +187,15 @@ class CabangaEvaluationSensor(_CabangaBaseSensor):
                 }
                 for e in evals[:5]
             ],
+            "toutes": [
+                {
+                    "date": e.get("date"),
+                    "matiere": e.get("subject"),
+                    "titre": e.get("title"),
+                    "score": e.get("score"),
+                    "score_max": e.get("maximumScore"),
+                    "formative": e.get("formative"),
+                }
+                for e in evals
+            ],
         }

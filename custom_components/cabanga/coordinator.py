@@ -11,7 +11,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import CabangaApiClient, CabangaApiError, CabangaAuthError
 from .const import (
     CONF_REFRESH_TOKEN,
-    CONF_SCHOOL_ID,
     DEFAULT_SCAN_INTERVAL,
     DIARY_DAYS_AFTER,
     DIARY_DAYS_BEFORE,
@@ -19,6 +18,19 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _current_school_year(today: date) -> int:
+    """Retourne l'année de début de l'année scolaire en cours.
+
+    Cabanga identifie une année scolaire par son année de début (ex. l'année
+    scolaire 2025-2026 est "year=2025"). L'année scolaire démarre en
+    septembre : avant septembre, on est encore dans l'année scolaire ayant
+    débuté l'année civile précédente.
+    """
+    if today.month >= 9:
+        return today.year
+    return today.year - 1
 
 
 class CabangaCoordinator(DataUpdateCoordinator):
@@ -29,7 +41,6 @@ class CabangaCoordinator(DataUpdateCoordinator):
         hass: HomeAssistant,
         entry: ConfigEntry,
         client: CabangaApiClient,
-        school_id: str,
         students: list[dict],
     ) -> None:
         super().__init__(
@@ -40,8 +51,7 @@ class CabangaCoordinator(DataUpdateCoordinator):
         )
         self.entry = entry
         self.client = client
-        self.school_id = school_id
-        self.students = students  # [{"id": "75729028", "name": "Haley"}, ...]
+        self.students = students  # [{"school_id": "CSJCHENEE", "id": "75729028", "name": "Haley"}, ...]
 
     async def _async_update_data(self) -> dict:
         today = date.today()
@@ -53,14 +63,16 @@ class CabangaCoordinator(DataUpdateCoordinator):
         try:
             for student in self.students:
                 student_id = student["id"]
+                school_id = student["school_id"]
                 diary = await self.client.async_get_diary(
-                    self.school_id, student_id, date_from, date_to
+                    school_id, student_id, date_from, date_to
                 )
                 evaluations = await self.client.async_get_evaluations(
-                    self.school_id, student_id, today.year
+                    school_id, student_id, _current_school_year(today)
                 )
                 result[student_id] = {
                     "name": student["name"],
+                    "school_id": school_id,
                     "diary": diary,
                     "evaluations": evaluations,
                 }

@@ -12,8 +12,7 @@ API_BASE_URL = "https://api.scolares.be/cabanga/api"
 
 # Configuration
 CONF_REFRESH_TOKEN = "refresh_token"
-CONF_SCHOOL_ID = "school_id"
-CONF_STUDENTS = "students"  # liste de {"id": ..., "name": ...}
+CONF_STUDENTS = "students"  # liste de {"school_id": ..., "id": ..., "name": ...}
 
 # Options
 DEFAULT_SCAN_INTERVAL = timedelta(hours=3)

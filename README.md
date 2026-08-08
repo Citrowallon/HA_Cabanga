@@ -40,11 +40,16 @@ la configuration initiale (et le refaire uniquement si l'intégration reste
 
 ### Récupérer les IDs élèves et l'ID école
 
-- **ID école** : visible dans n'importe quelle URL d'API, ex.
+Chaque enfant peut être dans une école différente — chaque élève porte donc
+son propre identifiant école.
+
+- **ID école** : visible dans n'importe quelle URL d'API pour cet enfant, ex.
   `https://api.scolares.be/cabanga/api/schools/CSJCHENEE/...` → ici `CSJCHENEE`
-- **ID élève** : clique sur "A faire" ou "Evaluations" pour un enfant donné,
-  regarde l'URL de la requête réseau, ex.
+- **ID élève** : dans le menu Cabanga, sélectionne l'enfant concerné, clique
+  sur "A faire" ou "Evaluations", regarde l'URL de la requête réseau, ex.
   `.../students/75729028/diary?...` → ici `75729028`
+
+Répète pour chaque enfant si plusieurs écoles sont concernées.
 
 ## Installation
 
@@ -57,8 +62,10 @@ la configuration initiale (et le refaire uniquement si l'intégration reste
 5. Paramètres → Appareils et services → Ajouter une intégration → cherche "Cabanga"
 6. Renseigne :
    - **Refresh token** : la valeur récupérée ci-dessus
-   - **Identifiant école** : ex. `CSJCHENEE`
-   - **Élèves** : format `id:Nom, id:Nom` — ex. `75729028:Haley, 12345678:Aaron`
+   - **Élèves** : format `ecole:id:Nom, ecole:id:Nom` — ex.
+     `CSJCHENEE:75729028:Haley, ECOLEX:12345678:Choukette` (une seule entrée
+     couvre tous les enfants, même s'ils sont dans des écoles différentes,
+     tant qu'ils partagent le même compte parent)
 
 ### Installation manuelle
 
