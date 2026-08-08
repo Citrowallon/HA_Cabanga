@@ -22,6 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         entities.append(CabangaJournalSensor(coordinator, entry, student_id))
         entities.append(CabangaHomeworkSensor(coordinator, entry, student_id))
         entities.append(CabangaEvaluationSensor(coordinator, entry, student_id))
+        entities.append(CabangaAbsenceSensor(coordinator, entry, student_id))
 
     async_add_entities(entities)
 
@@ -199,3 +200,35 @@ class CabangaEvaluationSensor(_CabangaBaseSensor):
                 for e in evals
             ],
         }
+
+
+class CabangaAbsenceSensor(_CabangaBaseSensor):
+    """Absences légales — structure JSON non confirmée (jamais observée avec
+    des données réelles, aucun élève testé n'avait d'absence enregistrée).
+
+    Le capteur reste volontairement générique : le nombre brut d'entrées
+    comme état, et la liste brute telle que renvoyée par l'API en attribut.
+    Dès qu'une vraie absence est enregistrée, la structure exacte pourra
+    être observée et ce capteur affiné en conséquence.
+    """
+
+    _attr_icon = "mdi:account-alert-outline"
+
+    def __init__(self, coordinator, entry, student_id) -> None:
+        super().__init__(coordinator, entry, student_id)
+        self._attr_unique_id = f"{DOMAIN}_{student_id}_absences"
+        name = self._student_name_init(coordinator, student_id)
+        self._attr_name = f"Absences {name}"
+
+    @staticmethod
+    def _student_name_init(coordinator, student_id) -> str:
+        return coordinator.data.get(student_id, {}).get("name", student_id) if coordinator.data else student_id
+
+    @property
+    def native_value(self) -> int:
+        return len(self._student_data.get("absences", []))
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        absences = self._student_data.get("absences", [])
+        return {"absences_brutes": absences}

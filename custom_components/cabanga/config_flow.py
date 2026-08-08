@@ -40,6 +40,9 @@ class CabangaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        self._reauth_entry: config_entries.ConfigEntry | None = None
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
@@ -82,4 +85,49 @@ class CabangaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "students_example": "CSJCHENEE:75729028:Haley, ECOLEX:12345678:Choukette"
             },
+        )
+
+    async def async_step_reauth(
+        self, entry_data: dict[str, Any]
+    ) -> config_entries.FlowResult:
+        """Déclenché automatiquement par HA quand ConfigEntryAuthFailed est levée.
+
+        L'utilisateur verra un bouton "Ré-authentifier" sur l'intégration
+        dans Paramètres > Appareils et services, sans avoir à la supprimer.
+        """
+        self._reauth_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.FlowResult:
+        """Demande uniquement un nouveau refresh_token, garde le reste (élèves) intact."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            session = async_get_clientsession(self.hass)
+            client = CabangaApiClient(session, user_input[CONF_REFRESH_TOKEN])
+            try:
+                await client.async_refresh_access_token()
+            except CabangaAuthError:
+                errors["base"] = "invalid_refresh_token"
+            except CabangaApiError:
+                errors["base"] = "cannot_connect"
+            else:
+                new_data = dict(self._reauth_entry.data)
+                new_data[CONF_REFRESH_TOKEN] = client.refresh_token
+                self.hass.config_entries.async_update_entry(
+                    self._reauth_entry, data=new_data
+                )
+                await self.hass.config_entries.async_reload(
+                    self._reauth_entry.entry_id
+                )
+                return self.async_abort(reason="reauth_successful")
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({vol.Required(CONF_REFRESH_TOKEN): str}),
+            errors=errors,
         )

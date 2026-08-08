@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import CabangaApiClient, CabangaApiError, CabangaAuthError
@@ -70,18 +71,21 @@ class CabangaCoordinator(DataUpdateCoordinator):
                 evaluations = await self.client.async_get_evaluations(
                     school_id, student_id, _current_school_year(today)
                 )
+                absences = await self.client.async_get_absences(school_id, student_id)
                 result[student_id] = {
                     "name": student["name"],
                     "school_id": school_id,
                     "diary": diary,
                     "evaluations": evaluations,
+                    "absences": absences,
                 }
         except CabangaAuthError as err:
-            # Le refresh_token n'est plus valide : il faut reconfigurer
-            # l'intégration avec un nouveau token capturé manuellement.
-            raise UpdateFailed(
-                "Session Cabanga expirée, reconfigurez l'intégration avec un "
-                f"nouveau refresh_token : {err}"
+            # Signale à HA que cette entrée a besoin d'être ré-authentifiée :
+            # déclenche automatiquement une notification + le bouton
+            # "Ré-authentifier" sur l'intégration, sans perdre la config
+            # existante (élèves, etc.) — voir config_flow.async_step_reauth.
+            raise ConfigEntryAuthFailed(
+                f"Session Cabanga expirée : {err}"
             ) from err
         except CabangaApiError as err:
             raise UpdateFailed(f"Erreur API Cabanga : {err}") from err

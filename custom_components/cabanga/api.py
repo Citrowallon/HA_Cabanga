@@ -103,3 +103,13 @@ class CabangaApiClient:
         url = f"{API_BASE_URL}/schools/{school_id}/students/{student_id}/evaluations"
         params = {"year": year}
         return await self._authed_get(url, params)
+
+    async def async_get_absences(self, school_id: str, student_id: str) -> list[dict]:
+        """Absences légales pour un élève.
+
+        Structure JSON non confirmée à ce jour (jamais observée avec des
+        données réelles) : aucun élève testé n'avait d'absence enregistrée.
+        L'appelant doit traiter le résultat de façon générique.
+        """
+        url = f"{API_BASE_URL}/schools/{school_id}/students/{student_id}/legalAbsences"
+        return await self._authed_get(url)
