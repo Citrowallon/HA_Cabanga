@@ -2,18 +2,21 @@
 
 Intégration custom (non officielle) pour importer dans Home Assistant les
 données de l'app scolaire [Cabanga](https://www.cabanga.be) (société
-Scolares) : journal de classe, devoirs à faire, et évaluations.
+Scolares) : journal de classe, devoirs à faire, évaluations, absences et
+retours anticipés.
 
 ⚠️ Projet personnel basé sur du reverse engineering de l'app web. Aucun lien
 avec Scolares/Cabanga. Peut casser si leur API change.
 
 ## Ce que ça fait
 
-Pour chaque enfant configuré, trois capteurs sont créés :
+Pour chaque enfant configuré, cinq capteurs sont créés :
 
 - **Journal de classe {enfant}** — nombre de cours aujourd'hui, avec heure/matière/sujet en attribut
 - **Devoirs à faire {enfant}** — nombre de devoirs non cochés comme faits, avec détail en attribut
-- **Dernière évaluation {enfant}** — dernière note reçue (`score`), avec matière/titre/date et les 5 dernières évaluations en attribut
+- **Dernière évaluation {enfant}** — dernière note reçue (`score`), avec matière/titre/date, les 5 dernières évaluations, et l'historique complet de l'année en attribut
+- **Retours anticipés {enfant}** — nombre de sorties avant l'heure sur l'année en cours, avec date/heure/motif/classe/autorisation en attribut
+- **Absences {enfant}** — ⚠️ **beta** : structure JSON jamais confirmée avec des données réelles (aucun élève testé n'avait d'absence enregistrée à ce jour). Le capteur reste générique : nombre brut d'entrées comme état, liste brute telle que renvoyée par l'API dans l'attribut `absences_brutes`. Si tu obtiens une vraie donnée, une issue/PR avec le JSON exact est bienvenue pour finaliser ce capteur comme les autres.
 
 ## Pourquoi il faut un refresh_token manuel
 
@@ -44,10 +47,10 @@ Chaque enfant peut être dans une école différente — chaque élève porte do
 son propre identifiant école.
 
 - **ID école** : visible dans n'importe quelle URL d'API pour cet enfant, ex.
-  `https://api.scolares.be/cabanga/api/schools/CSJCHENEE/...` → ici `CSJCHENEE`
+  `https://api.scolares.be/cabanga/api/schools/XXXXX/...` → ici `XXXXX`
 - **ID élève** : dans le menu Cabanga, sélectionne l'enfant concerné, clique
   sur "A faire" ou "Evaluations", regarde l'URL de la requête réseau, ex.
-  `.../students/75729028/diary?...` → ici `75729028`
+  `.../students/YYYYYYYY/diary?...` → ici `YYYYYYYY`
 
 Répète pour chaque enfant si plusieurs écoles sont concernées.
 
@@ -63,7 +66,7 @@ Répète pour chaque enfant si plusieurs écoles sont concernées.
 6. Renseigne :
    - **Refresh token** : la valeur récupérée ci-dessus
    - **Élèves** : format `ecole:id:Nom, ecole:id:Nom` — ex.
-     `CSJCHENEE:75729028:Haley, ECOLEX:12345678:Choukette` (une seule entrée
+     `ECOLE1:11111111:Prenom1, ECOLE2:22222222:Prenom2` (une seule entrée
      couvre tous les enfants, même s'ils sont dans des écoles différentes,
      tant qu'ils partagent le même compte parent)
 
@@ -73,20 +76,25 @@ Copie le dossier `custom_components/cabanga` dans le dossier
 `custom_components` de ta config Home Assistant, redémarre, puis suis les
 étapes 5-6 ci-dessus.
 
-## Limitations connues (v0.1)
+## Limitations connues
 
-- Pas encore de capteur pour les **absences** (à venir)
+- Le capteur **Absences** reste générique (voir ci-dessus) faute de vraie
+  donnée observée pour en confirmer la structure exacte
 - Le mapping id→nom des élèves doit être renseigné manuellement (pas
   d'auto-découverte via l'endpoint `profiles`, exploré plus tard)
-- Si le refresh_token expire (HA éteint >7 jours), il faut reconfigurer
-  l'intégration avec un nouveau token capturé manuellement — pas de
-  notification automatique de ce cas en v0.1
+- Si le refresh_token expire complètement (HA éteint plus de 7 jours
+  d'affilée), un flux de ré-authentification natif HA se déclenche
+  automatiquement (notification + bouton "Ré-authentifier" sur
+  l'intégration) — il suffit de coller un nouveau refresh_token, la config
+  des élèves est conservée
 
 ## Cartes Lovelace (style Nexus HUD)
 
-Trois cartes prêtes à l'emploi sont fournies dans
+Quatre cartes prêtes à l'emploi sont fournies dans
 [`examples/lovelace/`](examples/lovelace/), dans le style visuel "Nexus HUD"
-(fond navy, bordures/glow cyan, police Orbitron/Share Tech Mono).
+(fond navy, bordures/glow cyan, police Orbitron/Share Tech Mono). Toutes
+incluent `grid_options: columns: full`, pensé pour les vues Lovelace de
+type **Sections**.
 
 ### Carte principale — journal, devoirs, dernières évaluations
 
@@ -94,9 +102,13 @@ Trois cartes prêtes à l'emploi sont fournies dans
 
 Journal de classe du jour, devoirs à faire (non cochés comme faits), et les
 5 dernières évaluations avec badge coloré (🟢 ≥65%, 🟠 ≥50%, 🔴 en dessous).
+Un double-clic sur la carte ouvre une popup (via
+[`browser_mod`](https://github.com/thomasloven/hass-browser_mod)) avec
+l'historique complet des évaluations de l'année — pratique pour garder le
+dashboard compact tout en gardant l'historique à portée de clic.
 
 → [`examples/lovelace/carte-principale.yaml`](examples/lovelace/carte-principale.yaml)
-— nécessite `custom:button-card`
+— nécessite `custom:button-card`, `browser_mod` (optionnel, pour la popup)
 
 ### Carte historique — toutes les évaluations de l'année
 
@@ -118,6 +130,16 @@ croissant (matières les plus faibles en premier).
 → [`examples/lovelace/carte-moyennes.yaml`](examples/lovelace/carte-moyennes.yaml)
 — nécessite `custom:button-card`
 
+### Carte retours anticipés
+
+![Carte retours anticipés](docs/screenshots/carte-retours-anticipes.png)
+
+Liste des sorties avant l'heure enregistrées sur l'année scolaire en cours :
+date, heure, motif, classe concernée, et qui a autorisé la sortie.
+
+→ [`examples/lovelace/carte-retours-anticipes.yaml`](examples/lovelace/carte-retours-anticipes.yaml)
+— nécessite `custom:button-card`
+
 ### Installation d'une carte
 
 1. Ouvre le fichier `.yaml` correspondant, copie tout le contenu
@@ -129,8 +151,12 @@ croissant (matières les plus faibles en premier).
 
 ## Structure technique
 
-- `api.py` — client HTTP (Keycloak token refresh + endpoints Cabanga)
+- `api.py` — client HTTP (Keycloak token refresh + endpoints Cabanga :
+  diary, evaluations, absences, early departures)
 - `coordinator.py` — polling centralisé (toutes les 3h par défaut), persiste
-  le refresh_token à jour dans le config entry après chaque rotation
-- `config_flow.py` — formulaire de configuration + validation du token
-- `sensor.py` — les 3 entités par enfant
+  le refresh_token à jour dans le config entry après chaque rotation, lève
+  `ConfigEntryAuthFailed` si le token expire pour déclencher le flux de
+  ré-authentification natif HA
+- `config_flow.py` — formulaire de configuration + validation du token +
+  flux de ré-authentification (`async_step_reauth`)
+- `sensor.py` — les 5 entités par enfant
