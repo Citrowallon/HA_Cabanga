@@ -307,6 +307,11 @@ class CabangaAgendaSensor(_CabangaBaseSensor):
         return len(self._upcoming_events)
 
     @property
+    def _all_events_sorted(self) -> list[dict]:
+        agenda = self._student_data.get("agenda", [])
+        return sorted(agenda, key=lambda e: e.get("date") or "")
+
+    @property
     def extra_state_attributes(self) -> dict:
         upcoming = self._upcoming_events
         return {
@@ -318,5 +323,12 @@ class CabangaAgendaSensor(_CabangaBaseSensor):
                     "activite": e.get("activity"),
                 }
                 for e in upcoming[:15]
+            ],
+            "tous_evenements": [
+                {
+                    "date": e.get("date"),
+                    "activite": e.get("activity"),
+                }
+                for e in self._all_events_sorted
             ],
         }
