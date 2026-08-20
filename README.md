@@ -10,12 +10,13 @@ avec Scolares/Cabanga. Peut casser si leur API change.
 
 ## Ce que ça fait
 
-Pour chaque enfant configuré, cinq capteurs sont créés :
+Pour chaque enfant configuré, six capteurs sont créés :
 
 - **Journal de classe {enfant}** — nombre de cours aujourd'hui, avec heure/matière/sujet en attribut
 - **Devoirs à faire {enfant}** — nombre de devoirs non cochés comme faits, avec détail en attribut
 - **Dernière évaluation {enfant}** — dernière note reçue (`score`), avec matière/titre/date, les 5 dernières évaluations, et l'historique complet de l'année en attribut
 - **Retours anticipés {enfant}** — nombre de sorties avant l'heure sur l'année en cours, avec date/heure/motif/classe/autorisation en attribut
+- **Agenda {enfant}** — nombre d'événements à venir dans le calendrier scolaire officiel (rentrées, bulletins, conseils de classe, réunions, congés pédagogiques...), avec le tout prochain événement et la liste complète de l'année en attribut
 - **Absences {enfant}** — ⚠️ **beta** : structure JSON jamais confirmée avec des données réelles (aucun élève testé n'avait d'absence enregistrée à ce jour). Le capteur reste générique : nombre brut d'entrées comme état, liste brute telle que renvoyée par l'API dans l'attribut `absences_brutes`. Si tu obtiens une vraie donnée, une issue/PR avec le JSON exact est bienvenue pour finaliser ce capteur comme les autres.
 
 ## Pourquoi il faut un refresh_token manuel
@@ -128,7 +129,7 @@ Moyenne pondérée par matière depuis le début de l'année, triée par ordre
 croissant (matières les plus faibles en premier).
 
 → [`examples/lovelace/carte-moyennes.yaml`](examples/lovelace/carte-moyennes.yaml)
-— nécessite `custom:button-card`
+— nécessite `custom:button-card`, `card-mod`
 
 ### Carte retours anticipés
 
@@ -138,7 +139,19 @@ Liste des sorties avant l'heure enregistrées sur l'année scolaire en cours :
 date, heure, motif, classe concernée, et qui a autorisé la sortie.
 
 → [`examples/lovelace/carte-retours-anticipes.yaml`](examples/lovelace/carte-retours-anticipes.yaml)
-— nécessite `custom:button-card`
+— nécessite `custom:button-card`, `card-mod`
+
+### Carte agenda scolaire
+
+![Carte agenda](docs/screenshots/carte-agenda.png)
+
+Calendrier scolaire officiel : le tout prochain événement mis en avant
+(rentrée, bulletin, conseil de classe, réunion...), suivi des prochains
+événements en liste compacte. Double-clic pour voir l'année complète en
+popup.
+
+→ [`examples/lovelace/carte-agenda.yaml`](examples/lovelace/carte-agenda.yaml)
+— nécessite `custom:button-card`, `card-mod`, `browser_mod` (optionnel, pour la popup)
 
 ### Installation d'une carte
 
