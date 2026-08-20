@@ -121,3 +121,13 @@ class CabangaApiClient:
         url = f"{API_BASE_URL}/schools/{school_id}/students/{student_id}/earlyDepartures"
         params = {"year": year}
         return await self._authed_get(url, params)
+
+    async def async_get_agenda(self, school_id: str) -> list[dict]:
+        """Agenda/calendrier scolaire officiel (au niveau école, pas par élève).
+
+        Renvoie l'année complète en un seul appel (pas de pagination/dates
+        en paramètre observée) : rentrées, bulletins, conseils de classe,
+        réunions de parents, congés pédagogiques, etc.
+        """
+        url = f"{API_BASE_URL}/schools/{school_id}/agenda/activities"
+        return await self._authed_get(url)

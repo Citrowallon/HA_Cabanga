@@ -24,6 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         entities.append(CabangaEvaluationSensor(coordinator, entry, student_id))
         entities.append(CabangaAbsenceSensor(coordinator, entry, student_id))
         entities.append(CabangaEarlyDepartureSensor(coordinator, entry, student_id))
+        entities.append(CabangaAgendaSensor(coordinator, entry, student_id))
 
     async_add_entities(entities)
 
@@ -273,4 +274,49 @@ class CabangaEarlyDepartureSensor(_CabangaBaseSensor):
                 }
                 for d in departures
             ]
+        }
+
+
+class CabangaAgendaSensor(_CabangaBaseSensor):
+    """Agenda/calendrier scolaire officiel (rentrées, bulletins, congés
+    pédagogiques, réunions...). Au niveau école, identique pour tous les
+    élèves d'une même école.
+    """
+
+    _attr_icon = "mdi:calendar-star"
+
+    def __init__(self, coordinator, entry, student_id) -> None:
+        super().__init__(coordinator, entry, student_id)
+        self._attr_unique_id = f"{DOMAIN}_{student_id}_agenda"
+        name = self._student_name_init(coordinator, student_id)
+        self._attr_name = f"Agenda {name}"
+
+    @staticmethod
+    def _student_name_init(coordinator, student_id) -> str:
+        return coordinator.data.get(student_id, {}).get("name", student_id) if coordinator.data else student_id
+
+    @property
+    def _upcoming_events(self) -> list[dict]:
+        today_str = date.today().isoformat()
+        agenda = self._student_data.get("agenda", [])
+        upcoming = [e for e in agenda if (e.get("date") or "") >= today_str]
+        return sorted(upcoming, key=lambda e: e.get("date") or "")
+
+    @property
+    def native_value(self) -> int:
+        return len(self._upcoming_events)
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        upcoming = self._upcoming_events
+        return {
+            "prochain_evenement": upcoming[0].get("activity") if upcoming else None,
+            "prochaine_date": upcoming[0].get("date") if upcoming else None,
+            "evenements": [
+                {
+                    "date": e.get("date"),
+                    "activite": e.get("activity"),
+                }
+                for e in upcoming[:15]
+            ],
         }

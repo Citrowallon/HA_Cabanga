@@ -25,11 +25,12 @@ def _current_school_year(today: date) -> int:
     """Retourne l'année de début de l'année scolaire en cours.
 
     Cabanga identifie une année scolaire par son année de début (ex. l'année
-    scolaire 2025-2026 est "year=2025"). L'année scolaire démarre en
-    septembre : avant septembre, on est encore dans l'année scolaire ayant
-    débuté l'année civile précédente.
+    scolaire 2025-2026 est "year=2025"). La bascule est fixée au 24 août
+    (date de rentrée observée), pas au 1er septembre : avant cette date, on
+    est encore dans l'année scolaire ayant débuté l'année civile précédente.
     """
-    if today.month >= 9:
+    rentree = date(today.year, 8, 24)
+    if today >= rentree:
         return today.year
     return today.year - 1
 
@@ -75,6 +76,7 @@ class CabangaCoordinator(DataUpdateCoordinator):
                 early_departures = await self.client.async_get_early_departures(
                     school_id, student_id, _current_school_year(today)
                 )
+                agenda = await self.client.async_get_agenda(school_id)
                 result[student_id] = {
                     "name": student["name"],
                     "school_id": school_id,
@@ -82,6 +84,7 @@ class CabangaCoordinator(DataUpdateCoordinator):
                     "evaluations": evaluations,
                     "absences": absences,
                     "early_departures": early_departures,
+                    "agenda": agenda,
                 }
         except CabangaAuthError as err:
             # Signale à HA que cette entrée a besoin d'être ré-authentifiée :
